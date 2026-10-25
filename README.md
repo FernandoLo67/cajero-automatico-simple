@@ -77,15 +77,28 @@ Ese `0.001` es la senal de alarma. **Un saldo bancario que necesita tolerancia p
 
 **El redondeo es `HALF_UP`**, el redondeo comercial de toda la vida: `0.005` sube a `0.01`. Java usa `HALF_EVEN` por omision en algunas operaciones, que redondea al par mas cercano y no es lo que espera un contador.
 
+## Transferencias atomicas
+
+`Transferencia` mueve dinero entre dos `CuentaBancaria` de forma atomica: si el deposito en la cuenta destino falla despues de haber retirado de la cuenta origen, se hace rollback automatico. No puede quedar plata en el limbo.
+
+Validaciones antes de tocar ningun saldo:
+- Las dos cuentas no pueden ser la misma
+- Ninguna puede ser nula
+- El monto tiene que ser positivo
+
+Cada transferencia devuelve un `Recibo` inmutable con el monto, las dos cuentas y la marca de tiempo. El recibo se construye solo si la operacion completa fue exitosa — no hay recibos de transferencias fallidas.
+
 ## Estructura
 
 ```
 src/main/java/com/fernando/cajero/
 ├── CuentaBancaria.java              Saldo, PIN, historial. Toda la logica.
+├── Transferencia.java               Movimiento atomico entre dos cuentas con rollback.
 ├── SaldoInsuficienteException.java  El error que el cajero sabe explicar.
 └── Main.java                        Solo lee del teclado y escribe en pantalla.
 src/test/java/com/fernando/cajero/
-└── CuentaBancariaTest.java          18 pruebas, sin un solo delta.
+├── CuentaBancariaTest.java          18 pruebas, sin un solo delta.
+└── TransferenciaTest.java           10 pruebas.
 ```
 
 La logica no sabe que existe una consola. Es lo que permite probar `CuentaBancaria` entera sin simular entrada de teclado.
@@ -105,4 +118,4 @@ PIN de la cuenta de ejemplo: `1234`. Tres intentos y la tarjeta se bloquea.
 mvn test
 ```
 
-18 pruebas: operaciones basicas, validaciones, precision decimal e integridad del historial.
+28 pruebas: operaciones basicas, validaciones, precision decimal, integridad del historial y transferencias atomicas.
